@@ -84,6 +84,7 @@
         android:paddingBottom="8dp"
         android:background="#F9F9F9"
         android:paddingTop="8dp">
+
         <TextView
             android:id="@+id/legendInfo"
             android:layout_width="match_parent"

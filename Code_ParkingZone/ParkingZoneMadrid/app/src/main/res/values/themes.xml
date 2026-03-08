@@ -1,9 +1,8 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.ParkingZoneMadrid" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ParkingMadrid" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">#2196F3</item>
+        <item name="colorPrimaryDark">#1976D2</item>
+        <item name="colorAccent">#2196F3</item>
     </style>
-
-    <style name="Theme.ParkingZoneMadrid" parent="Base.Theme.ParkingZoneMadrid" />
 </resources>
