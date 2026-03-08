@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Parking Madrid</string>
+    <string name="app_title">🅿️ Parking Madrid</string>
+    <string name="login">Iniciar Sesión</string>
+    <string name="search_hint">Buscar dirección en Madrid…</string>
+    <string name="search_button">Buscar</string>
+    <string name="filter_all">Todas</string>
+    <string name="legend_loading">Cargando leyenda de tipos de estacionamiento...</string>
+    <string name="map_not_available">Mapa no disponible.</string>
+    <string name="address_not_found">Dirección no encontrada. Prueba con otra búsqueda.</string>
+    <string name="name_hint">Tu nombre</string>
+    <string name="email_hint">tu@email.com</string>
+    <string name="name_label">Nombre</string>
+    <string name="email_label">Email</string>
+    <string name="appbar_scrolling_view_behavior" translatable="false">androidx.coordinatorlayout.widget.AppBarLayout$ScrollingViewBehavior</string>
+</resources>
