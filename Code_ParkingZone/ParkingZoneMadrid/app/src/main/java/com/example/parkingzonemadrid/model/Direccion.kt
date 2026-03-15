@@ -1,16 +1,17 @@
 package com.example.parkingzonemadrid.model
 
 data class Direccion(
-    val id_direccion:Int,
-    val tipo_via: String,
-    val codigo_postal: Int,
-    val calle: String,
-    val num_finca: String,
-    val cod_distrito:Int,
-    val distrito: String,
-    val cod_barrio: Int,
-    val num_barrio: Int,
-    val barrio: String,
-    val bateria_linea: TipoAparcamiento
+    // val(solo get) var -> get y set automáticos
+    var id_direccion:Int,
+    var tipo_via: String,
+    var codigo_postal: Int,
+    var calle: String,
+    var num_finca: String,
+    var cod_distrito:Int,
+    var distrito: String,
+    var cod_barrio: Int,
+    var num_barrio: Int,
+    var barrio: String,
+    var bateria_linea: TipoAparcamiento
 
 )
