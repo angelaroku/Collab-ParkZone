@@ -1,36 +1,53 @@
 package com.example.parkingzonemadrid.model
 
+import kotlin.Int
+
+
 data class Usuario(
-    val id_usuario: Int,
-    val nom_usuario: String,
-    val correo: String,
-    val password: String,
-    val favorito: Array<Favorito>
+    // val(solo get) var -> get y set automáticos
+    public final  var id_usuario: Int,
+    public final  var nom_usuario: String,
+    public final  var correo: String,
+    public final  var password: String,
+    public final  var favoritos: MutableList<Favorito>
 
 ) {
-    //Fun equals y hashCode: se autogenera por el array de favoritos
+    // metodos CRUD de Favorito (desde clase Usuario)
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+    fun crearFavorito(nombre_favorito: String ){
+        //se agrega un id el numero de elementos de la lista de favoritos del usuario
+        val id_favorito = favoritos.size+1
 
-        other as Usuario
-
-        if (id_usuario != other.id_usuario) return false
-        if (nom_usuario != other.nom_usuario) return false
-        if (correo != other.correo) return false
-        if (password != other.password) return false
-        if (!favorito.contentEquals(other.favorito)) return false
-
-        return true
+        val favorito = Favorito(id_favorito,nombre_favorito)
+        favoritos.add(favorito)
     }
 
-    override fun hashCode(): Int {
-        var result = id_usuario
-        result = 31 * result + nom_usuario.hashCode()
-        result = 31 * result + correo.hashCode()
-        result = 31 * result + password.hashCode()
-        result = 31 * result + favorito.contentHashCode()
-        return result
+    fun consultarFavorito(id_favorito_seleccionado: Int) : Favorito?{
+
+        val favorito_seleccionado = favoritos.find { it.id_favorito == id_favorito_seleccionado }
+
+        if (favorito_seleccionado != null)
+            return favorito_seleccionado
+        else
+            return null
+
     }
+
+    fun modificar (id_favorito: Int, nuevo_nombre_favorito: String) : Boolean {
+
+        val favorito = favoritos.find { it.id_favorito == id_favorito }
+
+        return if (favorito != null) {
+            favorito.nombre_favorito = nuevo_nombre_favorito
+            true
+        } else{
+            false
+        }
+    }
+
+    fun eliminar(id_favorito: Int) : Boolean{
+        return favoritos.removeIf { it.id_favorito == id_favorito }
+    }
+
+
 }

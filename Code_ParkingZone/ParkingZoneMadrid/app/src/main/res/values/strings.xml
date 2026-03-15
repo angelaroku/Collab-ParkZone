@@ -1,21 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Parking Madrid</string>
-    <string name="login_title">Iniciar Sesión</string>
-    <string name="welcome_message">Bienvenido a Parking Madrid</string>
-    <string name="login_subtitle">Inicia sesión para guardar tus zonas favoritas</string>
-    <string name="name_hint">Nombre</string>
-    <string name="email_hint">Email</string>
-    <string name="login_button">Iniciar Sesión</string>
-    <string name="logout_button">Cerrar Sesión</string>
-    <string name="favorites_title">Favoritos</string>
-    <string name="no_favorites">Aún no tienes zonas favoritas</string>
-    <string name="zone_legend">Leyenda de Zonas</string>
-    <string name="save_favorite">Guardar</string>
-    <string name="navigate">Navegar</string>
-    <string name="zone_verde">Verde</string>
-    <string name="zone_azul">Azul</string>
-    <string name="zone_naranja">Naranja</string>
-    <string name="zone_roja">Roja</string>
-    <string name="price_format">€%.2f/h</string>
+    <string name="app_name">Parking Zone Madrid</string>
 </resources>
