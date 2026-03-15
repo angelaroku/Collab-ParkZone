@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#BBDEFB</color>
+    <color name="purple_500">#2196F3</color>
+    <color name="purple_700">#1976D2</color>
+    <color name="teal_200">#80CBC4</color>
+    <color name="teal_700">#00796B</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Colores de zonas -->
+    <color name="zone_verde">#4ade80</color>
+    <color name="zone_azul">#60a5fa</color>
+    <color name="zone_naranja">#fb923c</color>
+    <color name="zone_roja">#ef4444</color>
+
+    <!-- Color para chip de favoritos -->
+    <color name="chip_favorites_bg">#e91e63</color>
+</resources>
