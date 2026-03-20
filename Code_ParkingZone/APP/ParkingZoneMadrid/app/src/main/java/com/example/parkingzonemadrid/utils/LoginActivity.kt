@@ -4,13 +4,18 @@ import android.os.Bundle
 import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.parkingzonemadrid.databinding.ActivityLoginBinding
+import com.example.parkingzonemadrid.data.repository.ParkingLocalRepository
 import com.example.parkingzonemadrid.model.User
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private lateinit var prefsManager: PreferencesManager
+    private lateinit var repository: ParkingLocalRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,6 +23,7 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         prefsManager = PreferencesManager(this)
+        repository = ParkingLocalRepository(applicationContext)
         setupUI()
     }
 
@@ -56,6 +62,11 @@ class LoginActivity : AppCompatActivity() {
 
         val user = User(name = name, email = email)
         prefsManager.saveUser(user)
+
+        // Persistimos el usuario en Room para que el login “recuerde” y las favoritas queden asociadas a su email.
+        lifecycleScope.launch(Dispatchers.IO) {
+            repository.upsertUser(user)
+        }
 
         Toast.makeText(this, "¡Bienvenido, $name!", Toast.LENGTH_SHORT).show()
         setResult(RESULT_OK)
