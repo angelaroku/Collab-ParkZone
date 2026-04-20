@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_filter"
+        android:title="Filtrar"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        app:showAsAction="ifRoom">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/filter_all"
+                    android:title="Todas las zonas"
+                    android:checked="true" />
+                <item
+                    android:id="@+id/filter_verde"
+                    android:title="Solo Verde (residentes)" />
+                <item
+                    android:id="@+id/filter_azul"
+                    android:title="Solo Azul (rotación)" />
+                <item
+                    android:id="@+id/filter_mixta"
+                    android:title="Solo Mixta" />
+                <item
+                    android:id="@+id/filter_favoritos"
+                    android:title="Solo favoritos" />
+            </group>
+        </menu>
+    </item>
+
+</menu>
