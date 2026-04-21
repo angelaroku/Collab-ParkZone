@@ -6,18 +6,31 @@ import kotlin.Int
 data class Usuario(
     // val(solo get) var -> get y set automáticos
     //public final  por defecto
-    var id_usuario: Int,
-    var correo: String,
+    val id_usuario: Int,
     var nom_usuario: String,
+    var correo: String,
     var password: String,
     var favoritos: MutableList<Favorito>
 
 ) {
-    // metodos CRUD de Favorito (desde clase Usuario)
+    //uso de companion object para autogenerar los id's
+    companion object{
+        private var contador = 0
 
+        fun generarId(): Int{
+            contador ++
+            return contador
+        }
+    }
+
+    // metodos CRUD de Favorito (desde clase Usuario)
     fun crearFavorito(nombre_favorito: String, id_direccion:Int){
         //se agrega un id el numero de elementos de la lista de favoritos del usuario
-        val id_favorito = favoritos.size+1
+        val id_favorito = if ( favoritos. isEmpty()){
+            1
+        }else{
+            favoritos.maxOf { it.id_favorito } + 1
+        }
 
         val nuevo_favorito = Favorito(id_favorito,nombre_favorito,this.id_usuario, id_direccion)
         favoritos.add(nuevo_favorito)
@@ -25,13 +38,6 @@ data class Usuario(
 
     fun consultarFavorito(id_favorito_consultar: Int) : Favorito?{
         return favoritos.find { it.id_favorito == id_favorito_consultar }
-        /*version compleja con posibilidad de descartar
-        val favorito_seleccionado = favoritos.find { it.id_favorito == id_favorito_seleccionado }
-
-        if (favorito_seleccionado != null)
-            return favorito_seleccionado
-        else
-            return null*/
 
     }
 
