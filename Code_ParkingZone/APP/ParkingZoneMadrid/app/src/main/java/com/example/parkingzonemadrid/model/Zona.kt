@@ -5,7 +5,7 @@ import kotlin.text.isNotBlank
 data class Zona(
     // val(solo get) var -> get y set automáticos
     //public final  por defecto
-    var id_zona: Int,
+    val id_zona: Int,
     var gis_x: String,
     var gis_y: String,
     var color: TipoColor,
@@ -14,10 +14,20 @@ data class Zona(
     var tarifas:  MutableList<Tarifa>
 
 ) {
+    //uso de companion object para autogenerar los id's
+    companion object{
+        private var contador = 0
+
+        fun generarId(): Int{
+            contador ++
+            return contador
+        }
+    }
+
     // CRUD de Tarifa
     fun crearTarifa(color: TipoColor, precio: Float){
         // id automatico
-        val id_tarifa = tarifas.size+1
+        val id_tarifa = Tarifa.generarId()
 
         val nueva_tarifa = Tarifa(id_tarifa, color, precio)
         tarifas.add(nueva_tarifa)
@@ -26,13 +36,7 @@ data class Zona(
 
     fun consultarTarifa(id_tarifa_consultar: Int) : Tarifa? {
         return tarifas.find { it.id_tarifa == id_tarifa_consultar }
-        /* version compleja con posibilidad de descartar
-        val tarifa_consultada = tarifas.find { it.id_tarifa == id_tarifaZona }
 
-        if (tarifa_consultada != null)
-            return tarifa_consultada
-        else
-            return null*/
     }
 
     fun modificarTarifa(id_tarifa_modificar: Int, nuevo_precio: Float, nuevo_color:TipoColor): Boolean{
@@ -54,7 +58,7 @@ data class Zona(
     // CRUD de Horario
     fun crearHorario(hora:String, dias_semana:String, detalles:String){
         // id automatico
-        val id_horario = horarios.size+1
+        val id_horario = Horario.generarId()
 
         val nuevo_horario = Horario(id_horario, hora , dias_semana, detalles)
         horarios.add(nuevo_horario)
@@ -62,14 +66,6 @@ data class Zona(
 
     fun consultarHorario(id_horario_consultar: Int) : Horario? {
         return horarios.find { it.id_horario == id_horario_consultar }
-        /* version compleja con posibilidad de descartar
-        val horario_consultado = horarios.find { it.id_horario == id_horarioZona }
-
-
-        if (horario_consultado != null)
-            return horario_consultado
-        else
-            return null*/
     }
 
     fun modificarHorario(id_horario_modificar: Int, nueva_hora:String, nuevos_dias_semana:String, nuevos_detalles:String): Boolean{
