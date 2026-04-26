@@ -1,0 +1,11 @@
+# IDE y entorno local
+.idea/
+.vscode/
+**/.kotlin/
+*.iml
+
+# macOS
+.DS_Store
+
+# Carpeta duplicada del proyecto Android (el módulo correcto está en Code_ParkingZone/APP/ParkingZoneMadrid)
+Code_ParkingZone/ParkingZoneMadrid/

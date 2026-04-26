@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bubble_layout"
+    android:layout_width="280dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_infowindow"
+    android:orientation="vertical"
+    android:elevation="6dp">
+
+    <!-- Cabecera de color según zona -->
+    <LinearLayout
+        android:id="@+id/iwHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="10dp"
+        android:background="@color/zona_verde">
+
+        <TextView
+            android:id="@+id/iwStreetName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            tools:ignore="RtlHardcoded"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:text="CALLE" />
+
+        <ImageButton
+            android:id="@+id/iwFavorite"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/btn_star_big_off"
+            android:contentDescription="Favorito" />
+    </LinearLayout>
+
+    <!-- Número total de plazas -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/iwPlazas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="#1565C0"
+            android:text="0" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="#616161"
+            android:gravity="center_horizontal"
+            android:text="plazas totales SER\n(no en tiempo real)" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#EEEEEE" />
+
+    <!-- Zona / distrito -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="#616161"
+            android:text="Zona:" />
+
+        <TextView
+            android:id="@+id/iwZonaLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/zona_verde"
+            android:text="VERDE" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="4dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="#616161"
+            android:text="Distrito:" />
+
+        <TextView
+            android:id="@+id/iwDistrito"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#212121"
+            android:text="CENTRO" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="4dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="#616161"
+            android:text="Tipo de plaza:" />
+
+        <TextView
+            android:id="@+id/iwParkingType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#212121"
+            android:text="Línea" />
+    </LinearLayout>
+
+    <!-- Tarifa -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="8dp"
+        android:textSize="12sp"
+        android:textColor="#616161"
+        android:text="Tarifa:" />
+
+    <TextView
+        android:id="@+id/iwTarifa"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="2dp"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="@color/zona_verde"
+        android:text="0,25-0,45 €/h" />
+
+    <!-- Horario -->
+    <TextView
+        android:id="@+id/iwHorario"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="6dp"
+        android:textSize="11sp"
+        android:textColor="#757575"
+        android:text="L-V: 9:00-21:00 · Sáb: 9:00-15:00" />
+
+    <!-- Botón "Cómo llegar" (abre Google Maps con la calle pre-buscada) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/iwNavigate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="10dp"
+        android:text="Cómo llegar (Google Maps)"
+        android:textAllCaps="false"
+        android:textSize="13sp"
+        android:textColor="@android:color/white"
+        android:backgroundTint="#1976D2"
+        app:icon="@android:drawable/ic_dialog_map"
+        app:iconTint="@android:color/white"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+</LinearLayout>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_filter"
+        android:title="Filtrar"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        app:showAsAction="ifRoom">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/filter_park_all"
+                    android:title="Todas las plazas"
+                    android:checked="true" />
+                <item
+                    android:id="@+id/filter_park_linea"
+                    android:title="Solo en línea" />
+                <item
+                    android:id="@+id/filter_park_bateria"
+                    android:title="Solo en batería" />
+                <item
+                    android:id="@+id/filter_park_mixto"
+                    android:title="Solo mixto" />
+            </group>
+        </menu>
+    </item>
+
+</menu>

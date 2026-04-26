@@ -4,18 +4,18 @@ import android.content.Context
 import com.example.parkingzonemadrid.data.local.AppDatabase
 import com.example.parkingzonemadrid.data.local.entity.FavoriteEntity
 import com.example.parkingzonemadrid.data.local.entity.UserEntity
-import com.example.parkingzonemadrid.model.User
+import com.example.parkingzonemadrid.model.Usuario
 
 class ParkingLocalRepository(
     context: Context
 ) {
     private val database = AppDatabase.getInstance(context)
 
-    suspend fun upsertUser(user: User) {
+    suspend fun upsertUser(user: Usuario) {
         database.userDao().upsert(
             UserEntity(
-                email = user.email,
-                name = user.name
+                email = user.correo,
+                name = user.nom_usuario
             )
         )
     }

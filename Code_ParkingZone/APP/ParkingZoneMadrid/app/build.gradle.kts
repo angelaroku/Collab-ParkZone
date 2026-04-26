@@ -54,6 +54,8 @@ dependencies {
     kapt(libs.room.compiler)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.drawerlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

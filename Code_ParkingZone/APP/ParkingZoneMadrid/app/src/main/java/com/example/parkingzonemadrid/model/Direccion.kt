@@ -2,7 +2,7 @@ package com.example.parkingzonemadrid.model
 
 data class Direccion(
     // val(solo get) var -> get y set automáticos
-    var id_direccion:Int,
+    val id_direccion:Int,
     var tipo_via: String,
     var codigo_postal: Int,
     var calle: String,
@@ -14,4 +14,14 @@ data class Direccion(
     var barrio: String,
     var bateria_linea: TipoAparcamiento
 
-)
+) {
+    //uso de companion object para autogenerar los id's
+    companion object{
+        private var contador = 0
+
+        fun generarId(): Int{
+            contador ++
+            return contador
+        }
+    }
+}
