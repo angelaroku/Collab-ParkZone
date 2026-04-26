@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="?attr/colorPrimary">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ParkingZone Madrid"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:textSize="18sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Resumen de tarifas SER"
+        android:textColor="#E3F2FD"
+        android:textSize="12sp"
+        android:layout_marginTop="2dp" />
+
+    <!-- Tarifa Verde -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="14dp">
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@color/zona_verde"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Zona Verde (residentes)"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0,25–0,45 €/h"
+            android:textColor="#E8F5E9"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No residentes: 2,85 €/h · máx. 1h"
+        android:textColor="#BBDEFB"
+        android:textSize="11sp"
+        android:paddingStart="18dp" />
+
+    <!-- Tarifa Azul -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="10dp">
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@color/zona_azul"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Zona Azul (rotación)"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2,85 €/h"
+            android:textColor="#E3F2FD"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Máx. 2h · solo no residentes"
+        android:textColor="#BBDEFB"
+        android:textSize="11sp"
+        android:paddingStart="18dp" />
+
+    <!-- Tarifa Mixta -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="10dp">
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@color/zona_mixta"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Zona Mixta"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Combina Azul + Verde"
+            android:textColor="#F3E5F5"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Horario general -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Horario SER: L–V 9:00–21:00 · Sáb 9:00–15:00"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:layout_marginTop="14dp"
+        android:textStyle="italic" />
+
+</LinearLayout>
