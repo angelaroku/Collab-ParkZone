@@ -1,4 +1,4 @@
-package com.example.parkingzonemadrid.map
+package com.example.parkingzonemadrid.ui.map
 
 import android.content.Intent
 import android.net.Uri
@@ -22,6 +22,8 @@ import com.example.parkingzonemadrid.data.model.ParkingType
 import com.example.parkingzonemadrid.data.model.StreetZone
 import com.example.parkingzonemadrid.data.model.ZoneType
 import com.example.parkingzonemadrid.data.repository.ParkingLocalRepository
+import com.example.parkingzonemadrid.map.FavoritesAdapter
+import com.example.parkingzonemadrid.map.StreetInfoWindow
 import com.example.parkingzonemadrid.utils.PreferencesManager
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.Dispatchers
@@ -299,3 +301,4 @@ class MapActivity : AppCompatActivity() {
         const val OSM_PREFS = "osm_prefs"
     }
 }
+

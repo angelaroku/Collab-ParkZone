@@ -1,13 +1,14 @@
-package com.example.parkingzonemadrid.utils
+package com.example.parkingzonemadrid.ui.login
 
 import android.os.Bundle
 import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.example.parkingzonemadrid.databinding.ActivityLoginBinding
 import com.example.parkingzonemadrid.data.repository.ParkingLocalRepository
+import com.example.parkingzonemadrid.databinding.ActivityLoginBinding
 import com.example.parkingzonemadrid.model.Usuario
+import com.example.parkingzonemadrid.utils.PreferencesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -69,7 +70,7 @@ class LoginActivity : AppCompatActivity() {
         )
         prefsManager.saveUser(user)
 
-        // Persistimos el usuario en Room para que el login “recuerde” y las favoritas queden asociadas a su email.
+        // Persistimos el usuario en Room para asociar sus favoritos al email.
         lifecycleScope.launch(Dispatchers.IO) {
             repository.upsertUser(user)
         }

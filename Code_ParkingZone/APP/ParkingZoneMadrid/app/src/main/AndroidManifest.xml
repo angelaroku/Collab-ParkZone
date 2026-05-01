@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ParkingZoneMadrid">
         <activity
-            android:name=".map.MapActivity"
+            android:name=".ui.map.MapActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,7 +24,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".utils.LoginActivity"
+            android:name=".ui.login.LoginActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
