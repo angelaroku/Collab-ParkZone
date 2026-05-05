@@ -1,4 +1,4 @@
-package com.example.parkingzonemadrid.map
+package com.example.parkingzonemadrid.ui.mapa.adapters
 
 import android.view.LayoutInflater
 import android.view.View
@@ -66,3 +66,4 @@ class FavoritesAdapter(
         }
     }
 }
+
