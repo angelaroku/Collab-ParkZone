@@ -1,4 +1,4 @@
-package com.example.parkingzonemadrid.viewmodel
+package com.example.parkingzonemadrid.ui.mapa
 
 import androidx.lifecycle.ViewModel
 

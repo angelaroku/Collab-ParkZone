@@ -1,4 +1,4 @@
-package com.example.parkingzonemadrid.map
+package com.example.parkingzonemadrid.ui.mapa.components
 
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -15,12 +15,6 @@ import org.osmdroid.views.overlay.infowindow.InfoWindow
  * Popup estilo parking-madrid.es que aparece al pulsar una calle del mapa.
  * Muestra nombre, plazas, tipo de zona, distrito, tarifa, horario y un botón
  * para navegar con Google Maps.
- *
- * Cuando el usuario pulsa la estrella, avisa a [onFavoriteClicked] para que
- * [MapActivity] persista el cambio en Room.
- *
- * Cuando pulsa "Cómo llegar", avisa a [onNavigateClicked] para que
- * [MapActivity] abra Google Maps con la dirección pre-buscada.
  */
 class StreetInfoWindow(
     mapView: MapView,
@@ -114,3 +108,4 @@ class StreetInfoWindow(
         currentZone = null
     }
 }
+

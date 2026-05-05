@@ -1,4 +1,4 @@
-package com.example.parkingzonemadrid.ui.map
+package com.example.parkingzonemadrid.ui.mapa
 
 import android.content.Intent
 import android.net.Uri
@@ -22,8 +22,8 @@ import com.example.parkingzonemadrid.data.model.ParkingType
 import com.example.parkingzonemadrid.data.model.StreetZone
 import com.example.parkingzonemadrid.data.model.ZoneType
 import com.example.parkingzonemadrid.data.repository.ParkingLocalRepository
-import com.example.parkingzonemadrid.map.FavoritesAdapter
-import com.example.parkingzonemadrid.map.StreetInfoWindow
+import com.example.parkingzonemadrid.ui.mapa.adapters.FavoritesAdapter
+import com.example.parkingzonemadrid.ui.mapa.components.StreetInfoWindow
 import com.example.parkingzonemadrid.utils.PreferencesManager
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.Dispatchers
