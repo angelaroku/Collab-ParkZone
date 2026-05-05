@@ -5,7 +5,7 @@ data class Favorito(
     val id_favorito: Int,
     var nombre_favorito: String,
     //elementos que relacionan con otras clases
-    // y se agregan al crearse desde la app
+    // y se agregan al crearse un Fav desde la app
     var id_usuario: Int, var  id_direccion:Int
 
 )

@@ -14,14 +14,4 @@ data class Direccion(
     var barrio: String,
     var bateria_linea: TipoAparcamiento
 
-) {
-    //uso de companion object para autogenerar los id's
-    companion object{
-        private var contador = 0
-
-        fun generarId(): Int{
-            contador ++
-            return contador
-        }
-    }
-}
+)

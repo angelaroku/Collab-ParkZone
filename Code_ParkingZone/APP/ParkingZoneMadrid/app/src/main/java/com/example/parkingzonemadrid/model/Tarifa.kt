@@ -5,14 +5,4 @@ data class Tarifa(
     val id_tarifa: Int,
     var color: TipoColor,
     var precio: Float
-) {
-    //uso de companion object para autogenerar los id's
-    companion object{
-        private var contador = 0
-
-        fun generarId(): Int{
-            contador ++
-            return contador
-        }
-    }
-}
+)

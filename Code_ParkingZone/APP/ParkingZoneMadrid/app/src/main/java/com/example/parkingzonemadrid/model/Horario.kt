@@ -6,14 +6,4 @@ data class Horario(
     var hora:String,
     var dias_semana:String,
     var detalles: String
-) {
-    //uso de companion object para autogenerar los id's
-    companion object{
-        private var contador = 0
-
-        fun generarId(): Int{
-            contador ++
-            return contador
-        }
-    }
-}
+)

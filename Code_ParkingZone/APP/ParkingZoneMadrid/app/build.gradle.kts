@@ -1,8 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    kotlin("kapt")
-}
+    kotlin("kapt")}
 
 android {
     namespace = "com.example.parkingzonemadrid"
@@ -19,6 +18,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
 
     buildTypes {
         release {
@@ -48,6 +48,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+
+    // para usar room y el mapa:
     implementation(libs.osmdroid.android)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
@@ -57,6 +59,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.drawerlayout)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
