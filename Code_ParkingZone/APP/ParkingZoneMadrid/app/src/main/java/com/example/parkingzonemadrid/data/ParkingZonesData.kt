@@ -116,7 +116,9 @@ object ParkingZonesData {
                     totalPlazas = total,
                     plazasVerde = summary.plazasVerde,
                     plazasAzul = summary.plazasAzul,
-                    plazasOtras = summary.plazasOtras
+                    plazasOtras = summary.plazasOtras,
+                    hasLinea = summary.countLinea > 0,
+                    hasBateria = summary.countBateria > 0
                 )
             }
             .sortedByDescending { it.totalPlazas }

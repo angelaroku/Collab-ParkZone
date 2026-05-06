@@ -16,23 +16,23 @@ object ZonaMapper {
             id_direccion = 0,
             tipo_via = extraerTipoVia(csv.calle),
             calle = csv.calle, // Se mantiene literal como en el CSV
-            num_finca = csv.numFinca,
+            num_finca = csv.numero_finca,
             codigo_postal = 0,
-            cod_distrito = csv.codDistrito,
+            cod_distrito = csv.cod_distrito,
             distrito = csv.distrito,
-            cod_barrio = csv.codBarrio,
-            num_barrio = csv.numBarrio,
+            cod_barrio = csv.cod_barrio,
+            num_barrio = csv.num_barrio,
             barrio = csv.barrio,
             // Comprobamos el literal exacto "Batería" que viene en tu CSV
-            bateria_linea = if (csv.bateriaLinea.contains("Batería"))
+            bateria_linea = if (csv.bateria_linea.contains("Batería"))
                 TipoAparcamiento.BATERIA else TipoAparcamiento.LINEA
         )
 
         // Creamos la Zona con TODAS las variables para evitar el error "No value passed"
         val zona = Zona(
             id_zona = 0,
-            gis_x = csv.gisX,
-            gis_y = csv.gisY,
+            gis_x = csv.gis_x,
+            gis_y = csv.gis_y,
             color = traducirColor(csv.color),
             direcciones = mutableListOf(direccionCsvSER),
             horarios = generarHorariosMadrid().toMutableList(),

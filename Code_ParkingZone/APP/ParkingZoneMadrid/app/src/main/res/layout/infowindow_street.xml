@@ -63,7 +63,7 @@
             android:textSize="11sp"
             android:textColor="#616161"
             android:gravity="center_horizontal"
-            android:text="plazas totales SER\n(no en tiempo real)" />
+            android:text="plazas SER en esta calle\n(datos del CSV oficial)" />
     </LinearLayout>
 
     <View

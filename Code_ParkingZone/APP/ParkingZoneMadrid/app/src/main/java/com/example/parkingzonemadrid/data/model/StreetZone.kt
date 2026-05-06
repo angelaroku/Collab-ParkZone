@@ -6,9 +6,12 @@ package com.example.parkingzonemadrid.data.model
  *
  * - Si la calle solo tiene plazas verdes  -> ZoneType.VERDE
  * - Si la calle solo tiene plazas azules  -> ZoneType.AZUL
- * - Si tiene plazas verdes y azules       -> ZoneType.MIXTA
+ * - Si tiene plazas verdes y azules       -> ZoneType.MIXTA (no aparece como tal en el CSV,
+ *   pero surge al agregar plazas con colores distintos en una misma calle)
  *
- * El [parkingType] indica si las plazas son en línea, en batería o mixto.
+ * Aparcamiento: el CSV solo distingue "Línea" o "Batería" por plaza individual.
+ * Una misma calle puede tener filas con valores distintos, así que guardamos los
+ * dos flags [hasLinea] y [hasBateria] para poder filtrar por presencia.
  */
 data class StreetZone(
     val zoneId: Int,
@@ -21,7 +24,9 @@ data class StreetZone(
     val totalPlazas: Int,
     val plazasVerde: Int = 0,
     val plazasAzul: Int = 0,
-    val plazasOtras: Int = 0
+    val plazasOtras: Int = 0,
+    val hasLinea: Boolean = false,
+    val hasBateria: Boolean = false
 )
 
 enum class ZoneType(
@@ -36,12 +41,17 @@ enum class ZoneType(
     ALTA_ROTACION("Alta Rotación", "Alta Rotación"),
     OTRA("Otra", "Otra");
 
-    /** Tarifa resumida, tal como la presenta parking-madrid.es */
+    /**
+     * Tarifa orientativa publicada por parking-madrid.es / Ayto. Madrid.
+     * Las cifras son aproximadas (variables según vehículo y zona); deben verificarse
+     * contra la web oficial del Ayuntamiento.
+     */
     val tarifaResumen: String
         get() = when (this) {
-            VERDE -> "0,25-0,45 €/h (residentes)\nNo residentes: 2,85 €/h"
-            AZUL -> "2,85 €/h (máx. 2h no residentes)"
-            MIXTA -> "Azul: 2,85 €/h\nVerde: 0,25-0,45 €/h residentes"
+            VERDE -> "Residentes: 0,20 €/día (con autorización)\n" +
+                "No residentes: 1,55-4,55 €/h (máx. 1h)"
+            AZUL -> "0,75-4,15 €/h (máx. 2h)"
+            MIXTA -> "Azul: 0,75-4,15 €/h\nVerde: 1,55-4,55 €/h (no residentes)"
             NARANJA -> "Tarifa especial ayuntamiento"
             ROJA -> "Uso restringido"
             ALTA_ROTACION -> "Alta rotación (máx. 1h)"
@@ -53,11 +63,9 @@ enum class ZoneType(
 }
 
 /**
- * Tipo de aparcamiento mayoritario en la calle.
- *
- * - LINEA: las plazas están alineadas en paralelo a la acera.
- * - BATERIA: perpendicular o en diagonal.
- * - MIXTO: la calle tiene tramos en línea y tramos en batería.
+ * Tipo de aparcamiento mayoritario de la calle (resumen visual).
+ * Para filtrar conviene usar [StreetZone.hasLinea] / [StreetZone.hasBateria], porque
+ * el CSV no marca "Mixto" como categoría: aparece al sumar filas distintas.
  */
 enum class ParkingType(val displayName: String) {
     LINEA("Línea"),

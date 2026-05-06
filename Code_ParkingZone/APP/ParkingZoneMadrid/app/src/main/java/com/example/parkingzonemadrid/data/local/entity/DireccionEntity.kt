@@ -7,7 +7,6 @@ import com.example.parkingzonemadrid.model.TipoAparcamiento
 
 @Entity(
     tableName = "direcciones",
-    primaryKeys = ["id_direccion"],
     foreignKeys = [
         ForeignKey(
             entity = ZonaEntity::class,
