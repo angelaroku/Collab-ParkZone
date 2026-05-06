@@ -3,8 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_my_location"
+        android:title="Mi ubicación"
+        android:icon="@android:drawable/ic_menu_mylocation"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_filter"
-        android:title="Filtrar"
+        android:title="Filtrar plazas"
         android:icon="@android:drawable/ic_menu_sort_by_size"
         app:showAsAction="ifRoom">
         <menu>
@@ -15,13 +21,10 @@
                     android:checked="true" />
                 <item
                     android:id="@+id/filter_park_linea"
-                    android:title="Solo en línea" />
+                    android:title="Con plazas en línea" />
                 <item
                     android:id="@+id/filter_park_bateria"
-                    android:title="Solo en batería" />
-                <item
-                    android:id="@+id/filter_park_mixto"
-                    android:title="Solo mixto" />
+                    android:title="Con plazas en batería" />
             </group>
         </menu>
     </item>

@@ -1,5 +1,6 @@
 package com.example.parkingzonemadrid.model
 
+import kotlin.random.Random
 
 data class Usuario(
     // val(solo get) var -> get y set automáticos
@@ -10,4 +11,8 @@ data class Usuario(
     var password: String,
     var favoritos: MutableList<Favorito>
 
-)
+) {
+    companion object {
+        fun generarId(): Int = Random.nextInt(1, 1_000_000)
+    }
+}

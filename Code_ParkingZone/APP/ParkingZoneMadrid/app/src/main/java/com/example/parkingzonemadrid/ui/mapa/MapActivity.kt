@@ -1,24 +1,32 @@
 package com.example.parkingzonemadrid.ui.mapa
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.parkingzonemadrid.R
 import com.example.parkingzonemadrid.data.ParkingZonesData
-import com.example.parkingzonemadrid.data.model.ParkingType
 import com.example.parkingzonemadrid.data.model.StreetZone
 import com.example.parkingzonemadrid.data.model.ZoneType
 import com.example.parkingzonemadrid.data.repository.ParkingLocalRepository
@@ -30,19 +38,28 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.net.URLEncoder
 
 /**
  * Pantalla principal: mapa OSM con todas las calles del SER de Madrid.
  *
- * - Cada calle aparece como un pin con la letra "P" y el color de su zona
- *   (verde / azul / morado para mixta), igual que en parking-madrid.es.
- * - Al pulsar el pin, se abre un popup con tarifa, horario y nº de plazas.
- * - El toolbar permite filtrar por tipo de plaza (línea / batería / mixto).
+ * Mejoras incluidas:
+ *  - La barra de leyenda (Verde/Azul/Mixta) actúa como filtro por color.
+ *  - El menú permite filtrar por aparcamiento "con plazas en línea" o
+ *    "con plazas en batería" (basado en presencia, no en tipo dominante).
+ *  - El mapa solo pinta los pines visibles en el viewport actual; si haces
+ *    zoom out muy lejos no carga toda Madrid de golpe (evita el efecto "a trompicones").
+ *  - Las animaciones de centrado son suaves (animateTo con duración).
+ *  - Soporta `MyLocationNewOverlay` para mostrar la ubicación del usuario.
  */
 class MapActivity : AppCompatActivity() {
 
@@ -54,11 +71,37 @@ class MapActivity : AppCompatActivity() {
     private lateinit var favoritesRecycler: RecyclerView
     private lateinit var favoritesEmptyView: TextView
     private lateinit var favoritesAdapter: FavoritesAdapter
+    private lateinit var legendVerde: LinearLayout
+    private lateinit var legendAzul: LinearLayout
+    private lateinit var legendMixta: LinearLayout
+
+    private var locationOverlay: MyLocationNewOverlay? = null
 
     private var allZones: List<StreetZone> = emptyList()
     private var favoriteZoneIds: Set<Int> = emptySet()
     private var currentEmail: String? = null
     private var currentParkingFilter: ParkingFilter = ParkingFilter.ALL
+    private var currentColorFilter: ColorFilter = ColorFilter.ALL
+
+    private val viewportRefreshHandler = Handler(Looper.getMainLooper())
+    private var pendingViewportRefresh: Runnable? = null
+
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val granted = results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) {
+            enableMyLocation()
+            centerOnLastKnownLocation()
+        } else {
+            Toast.makeText(
+                this,
+                "Sin permiso de ubicación: el mapa se centrará en Madrid",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +115,9 @@ class MapActivity : AppCompatActivity() {
         drawerLayout = findViewById(R.id.drawerLayout)
         favoritesRecycler = findViewById(R.id.rvFavorites)
         favoritesEmptyView = findViewById(R.id.tvFavoritesEmpty)
+        legendVerde = findViewById(R.id.legendVerde)
+        legendAzul = findViewById(R.id.legendAzul)
+        legendMixta = findViewById(R.id.legendMixta)
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -83,11 +129,38 @@ class MapActivity : AppCompatActivity() {
             }
         }
 
+        // Aplica padding superior con el inset del sistema para que el toolbar
+        // no quede tapado por la barra de notificaciones.
+        val contentRoot = findViewById<View>(R.id.contentRoot)
+        ViewCompat.setOnApplyWindowInsetsListener(contentRoot) { v, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            v.setPadding(bars.left, bars.top, bars.right, 0)
+            insets
+        }
+
         mapView = findViewById(R.id.mapView)
         mapView.setTileSource(TileSourceFactory.MAPNIK)
         mapView.setMultiTouchControls(true)
-        mapView.controller.setZoom(13.0)
-        mapView.controller.setCenter(GeoPoint(40.4168, -3.7038)) // Madrid centro
+        // Empezamos con un zoom de barrio sobre Madrid centro;
+        // si el usuario concede ubicación, recolocamos al instante.
+        mapView.controller.setZoom(15.5)
+        mapView.controller.setCenter(MADRID_CENTER)
+        mapView.minZoomLevel = 12.0
+        mapView.maxZoomLevel = 19.0
+
+        mapView.addMapListener(object : MapListener {
+            override fun onScroll(event: ScrollEvent?): Boolean {
+                scheduleViewportRefresh()
+                return false
+            }
+
+            override fun onZoom(event: ZoomEvent?): Boolean {
+                scheduleViewportRefresh()
+                return false
+            }
+        })
 
         prefsManager = PreferencesManager(this)
         repository = ParkingLocalRepository(applicationContext)
@@ -109,7 +182,11 @@ class MapActivity : AppCompatActivity() {
         favoritesRecycler.layoutManager = LinearLayoutManager(this)
         favoritesRecycler.adapter = favoritesAdapter
 
-        // Back: si el cajón está abierto lo cierra; si no, comportamiento normal.
+        legendVerde.setOnClickListener { onLegendClicked(ColorFilter.VERDE) }
+        legendAzul.setOnClickListener { onLegendClicked(ColorFilter.AZUL) }
+        legendMixta.setOnClickListener { onLegendClicked(ColorFilter.MIXTA) }
+        refreshLegendHighlight()
+
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -123,6 +200,7 @@ class MapActivity : AppCompatActivity() {
         })
 
         loadMapData()
+        requestLocationOrFallback()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -132,14 +210,17 @@ class MapActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.action_my_location -> {
+                requestLocationOrFallback(centerAfterPermission = true)
+                return true
+            }
             R.id.filter_park_all -> currentParkingFilter = ParkingFilter.ALL
             R.id.filter_park_linea -> currentParkingFilter = ParkingFilter.LINEA
             R.id.filter_park_bateria -> currentParkingFilter = ParkingFilter.BATERIA
-            R.id.filter_park_mixto -> currentParkingFilter = ParkingFilter.MIXTO
             else -> return super.onOptionsItemSelected(item)
         }
         item.isChecked = true
-        renderStreetZones(applyFilter(allZones))
+        renderViewport()
         return true
     }
 
@@ -152,7 +233,7 @@ class MapActivity : AppCompatActivity() {
             val zones = ParkingZonesData.getStreetZones(applicationContext)
             withContext(Dispatchers.Main) {
                 allZones = zones
-                renderStreetZones(applyFilter(zones))
+                renderViewport()
                 refreshFavoritesList()
             }
         }
@@ -170,19 +251,52 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Centrar en una zona desde la lista de favoritos: comparamos con el viewport
+     * actual y solo movemos el mapa si la zona está fuera. Si está dentro, evitamos
+     * el "salto" brusco que pidió revisar la tutora.
+     */
     private fun focusOnZone(zone: StreetZone) {
         val point = GeoPoint(zone.latitude, zone.longitude)
-        mapView.controller.setZoom(17.0)
-        mapView.controller.animateTo(point)
+        val visibleBox = mapView.boundingBox
+        val centerArea = visibleBox?.let {
+            // "Área de centro": el 50 % central del viewport actual.
+            val latSpan = it.latNorth - it.latSouth
+            val lonSpan = it.lonEast - it.lonWest
+            val latPad = latSpan * 0.25
+            val lonPad = lonSpan * 0.25
+            doubleArrayOf(
+                it.latSouth + latPad,
+                it.latNorth - latPad,
+                it.lonWest + lonPad,
+                it.lonEast - lonPad
+            )
+        }
 
+        val needsMove = centerArea == null ||
+            zone.latitude !in centerArea[0]..centerArea[1] ||
+            zone.longitude !in centerArea[2]..centerArea[3]
+
+        if (needsMove) {
+            val targetZoom = maxOf(mapView.zoomLevelDouble, 16.5)
+            mapView.controller.animateTo(point, targetZoom, ANIMATION_MS)
+        }
+
+        // Mostramos el infowindow tras la animación, aunque no haya marker visible.
+        viewportRefreshHandler.postDelayed({
+            showInfoWindowFor(zone, point)
+        }, if (needsMove) ANIMATION_MS + 50L else 0L)
+    }
+
+    private fun showInfoWindowFor(zone: StreetZone, point: GeoPoint) {
         val marker = mapView.overlays
             .filterIsInstance<Marker>()
             .firstOrNull { it.position.latitude == zone.latitude && it.position.longitude == zone.longitude }
-
         infoWindow.close()
         infoWindow.bind(zone, favoriteZoneIds.contains(zone.zoneId))
-        marker?.showInfoWindow() ?: run {
-            // Si no estaba en pantalla, lo añadimos puntualmente para mostrar el popup.
+        if (marker != null) {
+            marker.showInfoWindow()
+        } else {
             val temp = Marker(mapView).apply {
                 position = point
                 icon = ContextCompat.getDrawable(this@MapActivity, iconResFor(zone.zoneType))
@@ -197,7 +311,6 @@ class MapActivity : AppCompatActivity() {
 
     private fun openInGoogleMaps(zone: StreetZone) {
         val query = URLEncoder.encode("${zone.streetName}, ${zone.district}, Madrid", "UTF-8")
-        // Intent oficial de búsqueda de Google Maps con coordenadas de respaldo.
         val gmmIntentUri = Uri.parse(
             "geo:${zone.latitude},${zone.longitude}?q=$query"
         )
@@ -208,7 +321,6 @@ class MapActivity : AppCompatActivity() {
             startActivity(mapIntent)
             return
         }
-        // Fallback: abrir en navegador.
         val webIntent = Intent(
             Intent.ACTION_VIEW,
             Uri.parse("https://www.google.com/maps/search/?api=1&query=$query")
@@ -216,13 +328,63 @@ class MapActivity : AppCompatActivity() {
         startActivity(webIntent)
     }
 
-    private fun applyFilter(zones: List<StreetZone>): List<StreetZone> {
-        return when (currentParkingFilter) {
+    /**
+     * Aplica los dos filtros (color de zona + tipo de aparcamiento por presencia).
+     * Sobre LINEA / BATERIA usamos `hasLinea` / `hasBateria` para que también
+     * incluyan calles "mixtas" en las que coexisten línea y batería.
+     */
+    private fun applyFilters(zones: List<StreetZone>): List<StreetZone> {
+        val byParking = when (currentParkingFilter) {
             ParkingFilter.ALL -> zones
-            ParkingFilter.LINEA -> zones.filter { it.parkingType == ParkingType.LINEA }
-            ParkingFilter.BATERIA -> zones.filter { it.parkingType == ParkingType.BATERIA }
-            ParkingFilter.MIXTO -> zones.filter { it.parkingType == ParkingType.MIXTO }
+            ParkingFilter.LINEA -> zones.filter { it.hasLinea }
+            ParkingFilter.BATERIA -> zones.filter { it.hasBateria }
         }
+        return when (currentColorFilter) {
+            ColorFilter.ALL -> byParking
+            ColorFilter.VERDE -> byParking.filter { it.zoneType == ZoneType.VERDE }
+            ColorFilter.AZUL -> byParking.filter { it.zoneType == ZoneType.AZUL }
+            ColorFilter.MIXTA -> byParking.filter { it.zoneType == ZoneType.MIXTA }
+        }
+    }
+
+    /**
+     * Pinta SOLO las calles dentro del viewport actual para evitar el efecto
+     * "a trompicones" cuando se intenta mostrar todo Madrid de golpe.
+     */
+    private fun renderViewport() {
+        if (allZones.isEmpty()) {
+            mapView.invalidate()
+            return
+        }
+        val box = mapView.boundingBox
+        val zoom = mapView.zoomLevelDouble
+
+        // A zoom muy alejado preferimos no mostrar miles de pines.
+        if (zoom < 13.0 || box == null) {
+            mapView.overlays.removeAll { it is Marker }
+            mapView.invalidate()
+            return
+        }
+
+        val latS = box.latSouth
+        val latN = box.latNorth
+        val lonW = box.lonEast.coerceAtMost(box.lonWest)
+        val lonE = box.lonEast.coerceAtLeast(box.lonWest)
+
+        val visibleZones = applyFilters(allZones)
+            .asSequence()
+            .filter { it.latitude in latS..latN && it.longitude in lonW..lonE }
+            .take(MAX_VISIBLE_MARKERS)
+            .toList()
+
+        renderStreetZones(visibleZones)
+    }
+
+    private fun scheduleViewportRefresh() {
+        pendingViewportRefresh?.let { viewportRefreshHandler.removeCallbacks(it) }
+        val task = Runnable { renderViewport() }
+        pendingViewportRefresh = task
+        viewportRefreshHandler.postDelayed(task, VIEWPORT_DEBOUNCE_MS)
     }
 
     private fun renderStreetZones(zones: List<StreetZone>) {
@@ -241,10 +403,16 @@ class MapActivity : AppCompatActivity() {
                 infoWindow.close()
                 infoWindow.bind(zone, favoriteZoneIds.contains(zone.zoneId))
                 clickedMarker.showInfoWindow()
-                map.controller.animateTo(clickedMarker.position)
+                // Animación suave hacia el pin (1s) en lugar del salto brusco.
+                map.controller.animateTo(clickedMarker.position, map.zoomLevelDouble, ANIMATION_MS)
                 true
             }
             mapView.overlays.add(marker)
+        }
+        // El locationOverlay se pinta encima si existe.
+        locationOverlay?.let { overlay ->
+            mapView.overlays.remove(overlay)
+            mapView.overlays.add(overlay)
         }
         mapView.invalidate()
     }
@@ -272,33 +440,122 @@ class MapActivity : AppCompatActivity() {
                     if (nowFavorite) "Guardado en favoritos" else "Eliminado de favoritos",
                     Toast.LENGTH_SHORT
                 ).show()
-                // Refrescar el popup para que la estrella se actualice.
                 infoWindow.bind(zone, nowFavorite)
                 refreshFavoritesList()
             }
         }
     }
 
+    private fun onLegendClicked(filter: ColorFilter) {
+        currentColorFilter = if (currentColorFilter == filter) ColorFilter.ALL else filter
+        refreshLegendHighlight()
+        renderViewport()
+    }
+
+    private fun refreshLegendHighlight() {
+        val active = currentColorFilter
+        legendVerde.alpha = if (active == ColorFilter.ALL || active == ColorFilter.VERDE) 1f else 0.4f
+        legendAzul.alpha = if (active == ColorFilter.ALL || active == ColorFilter.AZUL) 1f else 0.4f
+        legendMixta.alpha = if (active == ColorFilter.ALL || active == ColorFilter.MIXTA) 1f else 0.4f
+    }
+
+    /* ----------- Geolocalización ----------- */
+
+    private fun hasLocationPermission(): Boolean {
+        val fine = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        return fine || coarse
+    }
+
+    private fun requestLocationOrFallback(centerAfterPermission: Boolean = false) {
+        if (hasLocationPermission()) {
+            enableMyLocation()
+            if (centerAfterPermission) centerOnLastKnownLocation()
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    private fun enableMyLocation() {
+        if (locationOverlay != null) return
+        val overlay = MyLocationNewOverlay(GpsMyLocationProvider(this), mapView).apply {
+            enableMyLocation()
+        }
+        locationOverlay = overlay
+        mapView.overlays.add(overlay)
+        mapView.invalidate()
+    }
+
+    private fun centerOnLastKnownLocation() {
+        if (!hasLocationPermission()) return
+        val lm = getSystemService(LOCATION_SERVICE) as? LocationManager ?: return
+        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+        val location = providers.firstNotNullOfOrNull { provider ->
+            try {
+                lm.getLastKnownLocation(provider)
+            } catch (_: SecurityException) {
+                null
+            }
+        }
+        if (location != null) {
+            val point = GeoPoint(location.latitude, location.longitude)
+            mapView.controller.animateTo(point, 16.5, ANIMATION_MS)
+            // Diagnóstico: imprime la posición real que está dando el sistema,
+            // útil para distinguir entre "el GPS está mal" y "la app no la usa".
+            Toast.makeText(
+                this,
+                "Tu ubicación: %.5f, %.5f (proveedor: %s)".format(
+                    location.latitude, location.longitude, location.provider ?: "?"
+                ),
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            Toast.makeText(
+                this,
+                "Aún no hay una ubicación reciente. Activa el GPS y espera unos segundos.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         mapView.onResume()
+        if (hasLocationPermission()) {
+            locationOverlay?.enableMyLocation()
+        }
     }
 
     override fun onPause() {
         super.onPause()
         mapView.onPause()
+        locationOverlay?.disableMyLocation()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        pendingViewportRefresh?.let { viewportRefreshHandler.removeCallbacks(it) }
         Configuration.getInstance()
             .save(applicationContext, getSharedPreferences(OSM_PREFS, MODE_PRIVATE))
     }
 
-    private enum class ParkingFilter { ALL, LINEA, BATERIA, MIXTO }
+    private enum class ParkingFilter { ALL, LINEA, BATERIA }
+    private enum class ColorFilter { ALL, VERDE, AZUL, MIXTA }
 
     private companion object {
         const val OSM_PREFS = "osm_prefs"
+        const val ANIMATION_MS = 800L
+        const val VIEWPORT_DEBOUNCE_MS = 250L
+        const val MAX_VISIBLE_MARKERS = 350
+        val MADRID_CENTER = GeoPoint(40.4168, -3.7038)
     }
 }
-

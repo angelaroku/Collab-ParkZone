@@ -5,10 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.parkingzonemadrid.model.TipoColor
 
-@Entity(
-    tableName = "zonas",
-    primaryKeys = ["id_zona"]
-)
+@Entity(tableName = "zonas")
 data class ZonaEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id_zona")

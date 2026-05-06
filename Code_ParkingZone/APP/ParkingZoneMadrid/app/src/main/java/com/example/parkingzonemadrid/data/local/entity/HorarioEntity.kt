@@ -5,7 +5,6 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 @Entity(
     tableName = "horarios",
-    primaryKeys = ["id_horario"],
     foreignKeys = [
         ForeignKey(
             entity = ZonaEntity::class,      // Tabla a la que apunta

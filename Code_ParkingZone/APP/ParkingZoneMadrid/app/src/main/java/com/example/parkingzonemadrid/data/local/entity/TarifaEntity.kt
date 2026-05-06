@@ -7,7 +7,6 @@ import com.example.parkingzonemadrid.model.TipoColor
 
 @Entity(
     tableName = "tarifas",
-    primaryKeys = ["id_tarifa"],
     foreignKeys = [
         ForeignKey(
             entity = ZonaEntity::class,
