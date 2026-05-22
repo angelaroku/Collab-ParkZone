@@ -17,7 +17,9 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -30,6 +32,7 @@ import com.example.parkingzonemadrid.data.ParkingZonesData
 import com.example.parkingzonemadrid.data.model.StreetZone
 import com.example.parkingzonemadrid.data.model.ZoneType
 import com.example.parkingzonemadrid.data.repository.ParkingLocalRepository
+import com.example.parkingzonemadrid.ui.login.LoginActivity
 import com.example.parkingzonemadrid.ui.mapa.adapters.FavoritesAdapter
 import com.example.parkingzonemadrid.ui.mapa.components.StreetInfoWindow
 import com.example.parkingzonemadrid.utils.PreferencesManager
@@ -38,9 +41,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
+import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -82,9 +87,20 @@ class MapActivity : AppCompatActivity() {
     private var currentEmail: String? = null
     private var currentParkingFilter: ParkingFilter = ParkingFilter.ALL
     private var currentColorFilter: ColorFilter = ColorFilter.ALL
+    private var selectedStreetZone: StreetZone? = null
+    private var ignoreMapEventsUntilMs = 0L
+    private var skipLocationPromptOnNextResume = false
 
     private val viewportRefreshHandler = Handler(Looper.getMainLooper())
     private var pendingViewportRefresh: Runnable? = null
+
+    private val loginLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            refreshUserSession()
+        }
+    }
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -150,13 +166,24 @@ class MapActivity : AppCompatActivity() {
         mapView.minZoomLevel = 12.0
         mapView.maxZoomLevel = 19.0
 
+        mapView.overlays.add(0, MapEventsOverlay(object : MapEventsReceiver {
+            override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
+                closeStreetInfo()
+                return false
+            }
+
+            override fun longPressHelper(p: GeoPoint?): Boolean = false
+        }))
+
         mapView.addMapListener(object : MapListener {
             override fun onScroll(event: ScrollEvent?): Boolean {
+                if (System.currentTimeMillis() < ignoreMapEventsUntilMs) return false
                 scheduleViewportRefresh()
                 return false
             }
 
             override fun onZoom(event: ZoomEvent?): Boolean {
+                if (System.currentTimeMillis() < ignoreMapEventsUntilMs) return false
                 scheduleViewportRefresh()
                 return false
             }
@@ -200,7 +227,8 @@ class MapActivity : AppCompatActivity() {
         })
 
         loadMapData()
-        requestLocationOrFallback()
+        skipLocationPromptOnNextResume = true
+        ensureLocationPermissionAskIfNeeded()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -208,10 +236,30 @@ class MapActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val loggedIn = prefsManager.getUser() != null
+        menu.findItem(R.id.action_sign_in)?.isVisible = !loggedIn
+        menu.findItem(R.id.action_sign_out)?.isVisible = loggedIn
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_my_location -> {
                 requestLocationOrFallback(centerAfterPermission = true)
+                return true
+            }
+            R.id.action_sign_in -> {
+                loginLauncher.launch(Intent(this, LoginActivity::class.java))
+                return true
+            }
+            R.id.action_sign_out -> {
+                prefsManager.clearUser()
+                currentEmail = null
+                favoriteZoneIds = emptySet()
+                refreshFavoritesList()
+                invalidateOptionsMenu()
+                Toast.makeText(this, R.string.session_closed, Toast.LENGTH_SHORT).show()
                 return true
             }
             R.id.filter_park_all -> currentParkingFilter = ParkingFilter.ALL
@@ -222,6 +270,24 @@ class MapActivity : AppCompatActivity() {
         item.isChecked = true
         renderViewport()
         return true
+    }
+
+    private fun refreshUserSession() {
+        currentEmail = prefsManager.getUser()?.correo
+        lifecycleScope.launch(Dispatchers.IO) {
+            favoriteZoneIds = currentEmail?.let { repository.getFavoriteZoneIds(it) } ?: emptySet()
+            withContext(Dispatchers.Main) {
+                refreshFavoritesList()
+                invalidateOptionsMenu()
+                prefsManager.getUser()?.nom_usuario?.let { name ->
+                    Toast.makeText(
+                        this@MapActivity,
+                        getString(R.string.session_welcome, name),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
     }
 
     private fun loadMapData() {
@@ -235,6 +301,7 @@ class MapActivity : AppCompatActivity() {
                 allZones = zones
                 renderViewport()
                 refreshFavoritesList()
+                invalidateOptionsMenu()
             }
         }
     }
@@ -252,62 +319,52 @@ class MapActivity : AppCompatActivity() {
     }
 
     /**
-     * Centrar en una zona desde la lista de favoritos: comparamos con el viewport
-     * actual y solo movemos el mapa si la zona está fuera. Si está dentro, evitamos
-     * el "salto" brusco que pidió revisar la tutora.
+     * Desde favoritos: centra la calle, recarga pines del área y abre el recuadro resumen
+     * (con botón Cómo llegar en Google Maps).
      */
     private fun focusOnZone(zone: StreetZone) {
+        drawerLayout.closeDrawer(GravityCompat.START)
         val point = GeoPoint(zone.latitude, zone.longitude)
-        val visibleBox = mapView.boundingBox
-        val centerArea = visibleBox?.let {
-            // "Área de centro": el 50 % central del viewport actual.
-            val latSpan = it.latNorth - it.latSouth
-            val lonSpan = it.lonEast - it.lonWest
-            val latPad = latSpan * 0.25
-            val lonPad = lonSpan * 0.25
-            doubleArrayOf(
-                it.latSouth + latPad,
-                it.latNorth - latPad,
-                it.lonWest + lonPad,
-                it.lonEast - lonPad
-            )
-        }
+        pendingViewportRefresh?.let { viewportRefreshHandler.removeCallbacks(it) }
+        pendingViewportRefresh = null
 
-        val needsMove = centerArea == null ||
-            zone.latitude !in centerArea[0]..centerArea[1] ||
-            zone.longitude !in centerArea[2]..centerArea[3]
+        selectedStreetZone = zone
+        ignoreMapEventsUntilMs = System.currentTimeMillis() + ANIMATION_MS + 500L
+        mapView.controller.animateTo(point, 17.0, ANIMATION_MS)
 
-        if (needsMove) {
-            val targetZoom = maxOf(mapView.zoomLevelDouble, 16.5)
-            mapView.controller.animateTo(point, targetZoom, ANIMATION_MS)
-        }
-
-        // Mostramos el infowindow tras la animación, aunque no haya marker visible.
         viewportRefreshHandler.postDelayed({
-            showInfoWindowFor(zone, point)
-        }, if (needsMove) ANIMATION_MS + 50L else 0L)
+            renderViewport()
+            revealStreetInfo(zone, point)
+        }, ANIMATION_MS + 200L)
     }
 
-    private fun showInfoWindowFor(zone: StreetZone, point: GeoPoint) {
-        val marker = mapView.overlays
-            .filterIsInstance<Marker>()
-            .firstOrNull { it.position.latitude == zone.latitude && it.position.longitude == zone.longitude }
-        infoWindow.close()
+    private fun revealStreetInfo(zone: StreetZone, point: GeoPoint) {
+        selectedStreetZone = zone
         infoWindow.bind(zone, favoriteZoneIds.contains(zone.zoneId))
+        val marker = findMarkerForZone(zone)
         if (marker != null) {
             marker.showInfoWindow()
-        } else {
-            val temp = Marker(mapView).apply {
-                position = point
-                icon = ContextCompat.getDrawable(this@MapActivity, iconResFor(zone.zoneType))
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                infoWindow = this@MapActivity.infoWindow
-            }
-            mapView.overlays.add(temp)
-            mapView.invalidate()
-            temp.showInfoWindow()
+            return
         }
+        val temp = Marker(mapView).apply {
+            position = point
+            relatedObject = zone
+            icon = ContextCompat.getDrawable(this@MapActivity, iconResFor(zone.zoneType))
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            infoWindow = this@MapActivity.infoWindow
+            setOnMarkerClickListener { clicked, map ->
+                openStreetInfo(zone, clicked, map)
+                true
+            }
+        }
+        mapView.overlays.add(temp)
+        mapView.invalidate()
+        temp.showInfoWindow()
     }
+
+    private fun findMarkerForZone(zone: StreetZone): Marker? =
+        mapView.overlays.filterIsInstance<Marker>()
+            .firstOrNull { (it.relatedObject as? StreetZone)?.zoneId == zone.zoneId }
 
     private fun openInGoogleMaps(zone: StreetZone) {
         val query = URLEncoder.encode("${zone.streetName}, ${zone.district}, Madrid", "UTF-8")
@@ -388,33 +445,62 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun renderStreetZones(zones: List<StreetZone>) {
+        val preserveZone = selectedStreetZone
         mapView.overlays.removeAll { it is Marker }
-        infoWindow.close()
+
+        if (preserveZone == null || zones.none { it.zoneId == preserveZone.zoneId }) {
+            closeStreetInfo()
+        }
 
         val activity = this
+        var markerToReopen: Marker? = null
         zones.forEach { zone ->
             val marker = Marker(mapView)
             marker.position = GeoPoint(zone.latitude, zone.longitude)
             marker.title = zone.streetName
             marker.icon = ContextCompat.getDrawable(activity, iconResFor(zone.zoneType))
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            marker.relatedObject = zone
             marker.infoWindow = infoWindow
             marker.setOnMarkerClickListener { clickedMarker, map ->
-                infoWindow.close()
-                infoWindow.bind(zone, favoriteZoneIds.contains(zone.zoneId))
-                clickedMarker.showInfoWindow()
-                // Animación suave hacia el pin (1s) en lugar del salto brusco.
-                map.controller.animateTo(clickedMarker.position, map.zoomLevelDouble, ANIMATION_MS)
+                openStreetInfo(zone, clickedMarker, map)
                 true
             }
             mapView.overlays.add(marker)
+            if (preserveZone?.zoneId == zone.zoneId) {
+                markerToReopen = marker
+            }
         }
-        // El locationOverlay se pinta encima si existe.
+
+        preserveZone?.let { zone ->
+            markerToReopen?.let { marker ->
+                infoWindow.bind(zone, favoriteZoneIds.contains(zone.zoneId))
+                marker.showInfoWindow()
+            }
+        }
+
         locationOverlay?.let { overlay ->
             mapView.overlays.remove(overlay)
             mapView.overlays.add(overlay)
         }
         mapView.invalidate()
+    }
+
+    private fun openStreetInfo(zone: StreetZone, marker: Marker, map: MapView) {
+        pendingViewportRefresh?.let { viewportRefreshHandler.removeCallbacks(it) }
+        pendingViewportRefresh = null
+
+        selectedStreetZone = zone
+        infoWindow.bind(zone, favoriteZoneIds.contains(zone.zoneId))
+        marker.showInfoWindow()
+
+        ignoreMapEventsUntilMs = System.currentTimeMillis() + ANIMATION_MS + 400L
+        map.controller.animateTo(marker.position, map.zoomLevelDouble, ANIMATION_MS)
+    }
+
+    private fun closeStreetInfo() {
+        selectedStreetZone = null
+        infoWindow.close()
     }
 
     private fun iconResFor(zoneType: ZoneType): Int = when (zoneType) {
@@ -427,7 +513,8 @@ class MapActivity : AppCompatActivity() {
     private fun toggleFavorite(zone: StreetZone) {
         val email = currentEmail
         if (email == null) {
-            Toast.makeText(this, "Inicia sesión para guardar favoritos", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.favorites_need_login, Toast.LENGTH_SHORT).show()
+            loginLauncher.launch(Intent(this, LoginActivity::class.java))
             return
         }
         lifecycleScope.launch(Dispatchers.IO) {
@@ -441,6 +528,9 @@ class MapActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
                 infoWindow.bind(zone, nowFavorite)
+                if (selectedStreetZone?.zoneId == zone.zoneId) {
+                    selectedStreetZone = zone
+                }
                 refreshFavoritesList()
             }
         }
@@ -471,23 +561,61 @@ class MapActivity : AppCompatActivity() {
         return fine || coarse
     }
 
+    /**
+     * Si no hay permiso de ubicación, muestra un diálogo y lanza el sistema de permisos.
+     * Se llama al abrir el mapa y en cada [onResume] mientras siga sin concederse.
+     */
+    private fun ensureLocationPermissionAskIfNeeded(centerAfterGrant: Boolean = false) {
+        if (hasLocationPermission()) {
+            enableMyLocation()
+            if (centerAfterGrant) centerOnLastKnownLocation()
+            return
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.location_permission_title)
+            .setMessage(R.string.location_permission_message)
+            .setPositiveButton(R.string.location_permission_allow) { _, _ ->
+                locationPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            }
+            .setNegativeButton(android.R.string.cancel) { _, _ ->
+                Toast.makeText(this, R.string.location_permission_denied, Toast.LENGTH_LONG).show()
+            }
+            .setCancelable(true)
+            .show()
+    }
+
     private fun requestLocationOrFallback(centerAfterPermission: Boolean = false) {
         if (hasLocationPermission()) {
             enableMyLocation()
             if (centerAfterPermission) centerOnLastKnownLocation()
         } else {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
+            ensureLocationPermissionAskIfNeeded(centerAfterGrant = centerAfterPermission)
         }
     }
 
+    @Suppress("DEPRECATION") // osmdroid 6.1.18 aún expone setDirectionArrow como deprecado pero sin API sustituta estable
     private fun enableMyLocation() {
         if (locationOverlay != null) return
+        val d = resources.displayMetrics.density
+        val dotPx = (48 * d).toInt().coerceAtLeast(1)
+        val arrowW = (32 * d).toInt().coerceAtLeast(1)
+        val arrowH = (40 * d).toInt().coerceAtLeast(1)
+
+        val personBmp = ContextCompat.getDrawable(this, R.drawable.ic_my_location_dot)!!
+            .toBitmap(dotPx, dotPx)
+        val directionBmp = ContextCompat.getDrawable(this, R.drawable.ic_my_location_direction)!!
+            .toBitmap(arrowW, arrowH)
+
         val overlay = MyLocationNewOverlay(GpsMyLocationProvider(this), mapView).apply {
+            // Sustituye el pin/gráficos por defecto (triángulo blanco poco visible)
+            // por un círculo azul con borde y una flecha con contorno.
+            setPersonIcon(personBmp)
+            setDirectionArrow(personBmp, directionBmp)
             enableMyLocation()
         }
         locationOverlay = overlay
@@ -530,8 +658,17 @@ class MapActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         mapView.onResume()
+        if (skipLocationPromptOnNextResume) {
+            skipLocationPromptOnNextResume = false
+            if (hasLocationPermission()) {
+                locationOverlay?.enableMyLocation()
+            }
+            return
+        }
         if (hasLocationPermission()) {
             locationOverlay?.enableMyLocation()
+        } else {
+            ensureLocationPermissionAskIfNeeded()
         }
     }
 

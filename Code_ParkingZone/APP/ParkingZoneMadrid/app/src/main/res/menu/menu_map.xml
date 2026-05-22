@@ -29,4 +29,16 @@
         </menu>
     </item>
 
+    <item
+        android:id="@+id/action_sign_in"
+        android:title="@string/menu_sign_in"
+        android:icon="@drawable/ic_user"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_sign_out"
+        android:title="@string/menu_sign_out"
+        app:showAsAction="never"
+        android:visible="false" />
+
 </menu>
