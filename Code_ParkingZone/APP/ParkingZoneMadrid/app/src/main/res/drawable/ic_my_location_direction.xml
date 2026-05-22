@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Flecha de orientación: azul + borde blanco grueso + contorno oscuro fino. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="36dp"
+    android:height="44dp"
+    android:viewportWidth="36"
+    android:viewportHeight="44">
+
+    <path
+        android:pathData="M18,5 L33,37 L3,37 Z"
+        android:fillColor="#FF1976D2"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M18,5 L33,37 L3,37 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#99000000"
+        android:strokeWidth="1"
+        android:strokeLineJoin="round" />
+</vector>

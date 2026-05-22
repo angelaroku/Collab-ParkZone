@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">Parking Zone Madrid</string>
+
+    <string name="login_title">ParkingZone Madrid</string>
+    <string name="login_subtitle_sign_in">Accede con tu correo y contraseña</string>
+    <string name="login_subtitle_register">Crea tu cuenta para guardar favoritos</string>
+    <string name="login_mode_sign_in">Iniciar sesión</string>
+    <string name="login_mode_register">Crear cuenta</string>
+    <string name="login_hint_name">Nombre de usuario</string>
+    <string name="login_hint_email">Correo electrónico</string>
+    <string name="login_hint_password">Contraseña</string>
+    <string name="login_hint_confirm_password">Confirmar contraseña</string>
+    <string name="login_btn_sign_in">Entrar</string>
+    <string name="login_btn_register">Crear cuenta</string>
+    <string name="login_wrong_password">Contraseña incorrecta. Vuelve a intentarlo.</string>
+
+    <string name="menu_account">Cuenta</string>
+    <string name="menu_sign_in">Iniciar sesión</string>
+    <string name="menu_sign_out">Cerrar sesión</string>
+    <string name="session_welcome">Sesión iniciada: %1$s</string>
+    <string name="session_closed">Sesión cerrada</string>
+    <string name="favorites_need_login">Inicia sesión para guardar favoritos</string>
+
+    <string name="location_permission_title">Ubicación en el mapa</string>
+    <string name="location_permission_message">ParkingZone Madrid usa tu ubicación mientras usas la app para mostrarte en el mapa y ver qué tan cerca estás de cada zona SER.</string>
+    <string name="location_permission_allow">Permitir</string>
+    <string name="location_permission_denied">Sin ubicación activada no verás el punto azul en el mapa.</string>
 </resources>
