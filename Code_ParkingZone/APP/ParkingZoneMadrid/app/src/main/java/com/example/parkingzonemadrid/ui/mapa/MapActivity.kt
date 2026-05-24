@@ -29,8 +29,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.parkingzonemadrid.R
 import com.example.parkingzonemadrid.data.ParkingZonesData
-import com.example.parkingzonemadrid.data.model.StreetZone
-import com.example.parkingzonemadrid.data.model.ZoneType
+import com.example.parkingzonemadrid.data.mapa.StreetZone
+import com.example.parkingzonemadrid.data.mapa.ZoneType
 import com.example.parkingzonemadrid.data.repository.ParkingLocalRepository
 import com.example.parkingzonemadrid.ui.login.LoginActivity
 import com.example.parkingzonemadrid.ui.mapa.adapters.FavoritesAdapter

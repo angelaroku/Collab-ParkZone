@@ -8,8 +8,8 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.parkingzonemadrid.R
-import com.example.parkingzonemadrid.data.model.StreetZone
-import com.example.parkingzonemadrid.data.model.ZoneType
+import com.example.parkingzonemadrid.data.mapa.StreetZone
+import com.example.parkingzonemadrid.data.mapa.ZoneType
 
 /**
  * Adapter para la lista de favoritos del cajón lateral.

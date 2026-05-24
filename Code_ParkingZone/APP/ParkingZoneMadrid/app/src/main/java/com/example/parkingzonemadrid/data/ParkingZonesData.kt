@@ -1,9 +1,9 @@
 package com.example.parkingzonemadrid.data
 
 import android.content.Context
-import com.example.parkingzonemadrid.data.model.ParkingType
-import com.example.parkingzonemadrid.data.model.StreetZone
-import com.example.parkingzonemadrid.data.model.ZoneType
+import com.example.parkingzonemadrid.data.mapa.ParkingType
+import com.example.parkingzonemadrid.data.mapa.StreetZone
+import com.example.parkingzonemadrid.data.mapa.ZoneType
 import kotlin.math.abs
 import kotlin.math.pow
 

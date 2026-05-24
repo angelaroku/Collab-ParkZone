@@ -5,8 +5,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.example.parkingzonemadrid.R
-import com.example.parkingzonemadrid.data.model.StreetZone
-import com.example.parkingzonemadrid.data.model.ZoneType
+import com.example.parkingzonemadrid.data.mapa.StreetZone
+import com.example.parkingzonemadrid.data.mapa.ZoneType
 import com.google.android.material.button.MaterialButton
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.infowindow.InfoWindow

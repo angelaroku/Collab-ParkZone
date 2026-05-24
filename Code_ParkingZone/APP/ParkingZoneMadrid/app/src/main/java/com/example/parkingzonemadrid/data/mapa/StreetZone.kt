@@ -1,4 +1,4 @@
-package com.example.parkingzonemadrid.data.model
+package com.example.parkingzonemadrid.data.mapa
 
 /**
  * Representa una calle del Servicio de Estacionamiento Regulado (SER) de Madrid,
